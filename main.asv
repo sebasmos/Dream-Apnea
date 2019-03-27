@@ -1,11 +1,15 @@
-
+%% TRABAJO FINAL: DETECCION DE EVENTOS DE APNEA OBSTRUCCIVA E HYPOAPNEA
+%Se usara la base de datos apnea-ecg, bajamos todas las señales de 
+%entrenamiento, las cuales son 8. Estas vienen con toda la informacion, y
+%tiene los siguientes canales:
+%Respiratorios (A,C,N), cardiacos (ECG), y pulsioximetría(SP02)
 clc;
 close all;
 clear all;
 
 addpath('C:\Program Files\MATLAB\R2018a\prtools')
 addpath('C:\MATLAB2018\MATLAB\mcode\BioMedicine\Dream Abnea\BiomedicasFinal\apnea-ecg');
-% Tamano
+% Tamano para mostrar datos
 m = 6000;
 % Numero de datasets
 N = 7;
@@ -29,7 +33,6 @@ for i = 1:N
     RespN(:,i)  =  (signal(4,:)+1903)./20000;
     SpO2(:,i)   =  signal(5,:);
 end
-
     % NORMALIZATION MIN MAX
     FullECG   = (ECG-min(ECG))./(max(ECG)-min(ECG));    
     FullRespC = (RespC-min(RespC))./(max(RespC)-min(RespC));
@@ -80,26 +83,31 @@ mc2=[];
 win_size = 256;
 win_inc = 128; % El solapamiento de la ventana es del 50% en entrenamiento
 %% MAIN FEATURES EXTRACTION
-% Pace 1 by 1
-k = 1;
-% We design a pace for reading the signal each minute
-pace = 6000;
-    for j=1:pace:6996000
-        temp=ECGTotal((j:j+6000-1));
-        [feature1,feature2,feature3,feature4] = extract_feature(temp',win_size,win_inc);
-        mc1(k)  = mean(feature1);
-        mc2(k,:)= mean(feature2);
-        mc3(k)  = mean(feature3);
-        mc4(k)  = mean(feature4);
-        k       = k + 1;       
-    end
-mc5 = SPO2Detector(SpO2Total(:,1:6996000));
-%% ANNOTATIONS
 
-class_training=getclass();
+%% ANOTACIONES
+
+class_training=getTotalclass();
+
+%% SELECCION DE CARACTERISTICAS PARA ENTRENAMIENTO
+
+m = 6996000;
+Feature_Training = TotalFeaturesTraining(m,ECGTotal,SpO2Total,win_size,win_inc,Fs);
 
 
-feature_training = [mc1' mc2(:,1) mc2(:,2) mc2(:,3) mc2(:,4) mc3' mc4' mc5'];
+%% ENTRENAMIENTO DE ALGORITMO
 
+[Data_training,PC_training,Ws_training,W_training,Ap_training] = entrenamiento1(Feature_Training,class_training);
 
-[Data_training,PC_training,Ws_training,W_training,Ap_training] = entrenamiento1(feature_training,class_training);
+%% II PARTE: EXTRACCIÓN DE LOS DATOS DE PRUEBA
+%Declaramos el tamaño de la ventana
+win_inctesting = 32; % El solapamiento de la ventana es del 82.5% en entrenamiento
+%Cargamos los datos de prueba.  
+testing = load('a02erm.mat');
+testing = testing.val;
+%% SELECCION DE CARACTERISTICAS PARA PRUEBA
+ECGtesting = testing(1,:);
+RespAtesting = testing(2,:);
+RespCtesting = testing(3,:);
+RespNtesting = testing(4,:);
+SPo2testing = testing(5,:);
+Feature_TESTING = TotalFeatures(m,testing,win_size,win_inc,Fs);
