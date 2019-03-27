@@ -1,4 +1,4 @@
-function [DatasetTotal,PC,Ws,W,Ap]=entrenamiento1(feature_training,class_training)
+function [DatasetTotal,PC,Ws,W,Ap]=Data_Training(feature_training,class_training)
 %% ENTRENAMIENTO DE LOS CLASIFICADORES
 %Variables de salida:
 % Dataset Total: lista de los datos junto con las características y las 

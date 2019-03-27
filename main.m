@@ -83,33 +83,52 @@ mc2=[];
 win_size = 256;
 win_inc = 128; % El solapamiento de la ventana es del 50% en entrenamiento
 %% MAIN FEATURES EXTRACTION
-
+% Se selecciona m como multiplo de 6000 que equivale a 1 min
+m = 6996000;
+Feature_Training = TotalFeatures(m,ECGTotal,SpO2Total,win_size,win_inc,Fs);
 %% ANOTACIONES
 
 class_training=getTotalclass();
 
-%% SELECCION DE CARACTERISTICAS PARA ENTRENAMIENTO
+% ENTRENAMIENTO DE ALGORITMO
 
-m = 6996000;
-Feature_Training = TotalFeaturesTraining(m,ECGTotal,SpO2Total,win_size,win_inc,Fs);
-
-
-%% ENTRENAMIENTO DE ALGORITMO
-
-[Data_training,PC_training,Ws_training,W_training,Ap_training] = entrenamiento1(Feature_Training,class_training);
-
+[Data_training,PC_training,Ws_training,W_training,Ap_training] = Data_Training(Feature_Training,...
+        class_training);
+    disp('---------------------------------------------------')
+    name_classf = {'nmc','knnc','ld','qdc','parzenc','dtc','neurc'};
+    [E,C]=testc(Ap_training*PC_training*W_training);
+    minE = min(E);
+    IminE = find(E==minE);
+    minimoerror=IminE(1);
+    nombremejorclasificador=name_classf(IminE);
 %% II PARTE: EXTRACCIÓN DE LOS DATOS DE PRUEBA
 %Declaramos el tamaño de la ventana
-win_inctesting = 32; % El solapamiento de la ventana es del 82.5% en entrenamiento
+    Win_Testing = 32; % El solapamiento de la ventana es del 82.5% en entrenamiento
 %Cargamos los datos de prueba.  
-testing = load('a02erm.mat');
-testing = testing.val;
+    testing = load('a02erm.mat');
+    testing = testing.val;
+% REGISTRO
+    Registro = 2;
 %% SELECCION DE CARACTERISTICAS PARA PRUEBA
-ECGtesting = testing(1,:);
-RespAtesting = testing(2,:);
-RespCtesting = testing(3,:);
-RespNtesting = testing(4,:);
-SPo2testing = testing(5,:);
-TestingPace = 966000;
-Feature_TESTING = TotalFeatures(TestingPace,ECGtesting,SPo2testing,win_size,win_inc,Fs);
-disp('funciona')
+    ECGtesting = testing(1,:);
+    RespAtesting = testing(2,:);
+    RespCtesting = testing(3,:);
+    RespNtesting = testing(4,:);
+    SPo2testing = testing(5,:);
+% Se establece "paso" múltiplo de 6000 muestras para dataset de testing
+    TestingPace = 966000;
+% EXTRACCION DE CARACTERISTICAS
+    Feature_Testing = TotalFeatures(TestingPace,ECGtesting,SPo2testing,win_size,Win_Testing,Fs);
+% OBTENER CLASES
+    Class_Testing = getclass(Registro);
+   % class_testing = [class_testing; zeros(length(length(class_testing(1)-Feature_Testing(1))),9)];
+    [Data_testing] = Data_Testing(Feature_Testing,Class_Testing);
+
+%% V PARTE: CLASIFICACIÓN DE LOS DATOS DE PRUEBA
+
+LABEL = labeld(Feature_Testing,Ws_training*PC_training*W_training{minimoerror});
+
+% OBTENER ERRORES EXPERIMENTALES
+
+GetError(Class_Testing,LABEL)
+

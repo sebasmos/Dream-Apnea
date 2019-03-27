@@ -5,9 +5,9 @@ switch(registro)
         class_training(1:13) = 0;
         %class_training(227:230) = 0;
     case 2
-        class_training = ones(166,1);
+        class_training = ones(161,1);
         class_training(1:21) = 0;
-        class_training(130:166) = 0;
+        class_training(130:161) = 0;
        % class_training(201:206) = 0;
     case 3
         class_training = ones(166,1);
